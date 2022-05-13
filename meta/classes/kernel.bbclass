@@ -93,6 +93,7 @@ python __anonymous () {
 
     kname = d.getVar('KERNEL_PACKAGE_NAME') or "kernel"
     imagedest = d.getVar('KERNEL_IMAGEDEST')
+    kernel_imagetype_symlink = d.getVar('KERNEL_IMAGETYPE_SYMLINK')
 
     for type in types.split():
         if bb.data.inherits_class('nopackages', d):
@@ -110,7 +111,8 @@ python __anonymous () {
 
         d.setVar('PKG:%s-image-%s' % (kname,typelower), '%s-image-%s-${KERNEL_VERSION_PKG_NAME}' % (kname, typelower))
         d.setVar('ALLOW_EMPTY:%s-image-%s' % (kname, typelower), '1')
-        d.setVar('pkg_postinst:%s-image-%s' % (kname,typelower), """set +e
+        if kernel_imagetype_symlink == 1:
+            d.setVar('pkg_postinst:%s-image-%s' % (kname,typelower), """set +e
 if [ -n "$D" ]; then
     ln -sf %s-${KERNEL_VERSION} $D/${KERNEL_IMAGEDEST}/%s > /dev/null 2>&1
 else
@@ -122,7 +124,7 @@ else
 fi
 set -e
 """ % (type, type, type, type, type, type, type))
-        d.setVar('pkg_postrm:%s-image-%s' % (kname,typelower), """set +e
+            d.setVar('pkg_postrm:%s-image-%s' % (kname,typelower), """set +e
 if [ -f "${KERNEL_IMAGEDEST}/%s" -o -L "${KERNEL_IMAGEDEST}/%s" ]; then
     rm -f ${KERNEL_IMAGEDEST}/%s  > /dev/null 2>&1
 fi
